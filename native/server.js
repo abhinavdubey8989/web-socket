@@ -20,6 +20,7 @@ const wsServer = new webSocket.WebSocketServer({server:httpServer});
 // the client requests to upgrade the connection
 // the server by default accepts the connection
 wsServer.on('headers' , (headers , req)=>{
+    console.log(`inside header event ...`)
     console.log(headers);
 });
 
@@ -27,7 +28,7 @@ wsServer.on('headers' , (headers , req)=>{
 // websocket-server on connection makes a websocket
 wsServer.on('connection',(ws,req)=>{
     // console.log(ws);
-    ws.send('Welcome to the websocket server!!!');
+    ws.send('Welcome from server!!!');
     ws.on('message',(data)=>{
         console.log(data.toString());
     })
@@ -35,4 +36,5 @@ wsServer.on('connection',(ws,req)=>{
 
 
 // listening on a port
+// httpServer.listen(port , `server listening on port : ${port}`);
 httpServer.listen(port);
