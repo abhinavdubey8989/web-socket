@@ -1,0 +1,19 @@
+<script>
+
+    // step-1 : WebSocket is readily available in browser
+    // we hit backend with WS request
+    let ws = new WebSocket('ws://localhost:8000');
+    console.log(ws);
+
+    // step-3 : happens on client after handshake is complete
+    ws.onopen = (event)=>{
+        console.log(event);
+        ws.send("I'm so excited I'm connected to the server. It's like my country just won the World Cup!")
+    }
+
+    ws.onmessage = (message)=>{
+        console.log(message.data);
+    }
+
+
+</script>
