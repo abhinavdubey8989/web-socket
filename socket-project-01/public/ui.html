@@ -39,37 +39,5 @@
 </div>
 
 <!-- <script src="/socket.io/socket.io.js"></script> -->
-<script src="http://localhost:3000/socket.io/socket.io.js"> </script>
-
-
-<script>
-
-    const port = 3000
-    const socket = io(`http://localhost:${port}`);
-    socket.on('connect',(data)=>{
-        //do connect type stuff
-        console.log(data)
-    })
-
-    socket.on('messageFromServer',(dataFromServer)=>{
-        console.log(dataFromServer)
-    })
-    
-    socket.on('test-1',(dataFromServer)=>{
-        console.log(dataFromServer)
-    })
-    
-
-    socket.on('newMessageToClients',(newMessage)=>{
-        document.querySelector('#messages').innerHTML += `<li>${newMessage.text}</li>`
-    })
-    
-    document.querySelector('#message-form').addEventListener('submit',(event)=>{
-        event.preventDefault();
-        const newMessage = document.querySelector('#user-message').value
-        // console.log(newMessage);
-        socket.emit('newMessageToServer',{text:newMessage})
-    })
-
-
-</script>
+<script src="http://localhost:3000/socket.io/socket.io.js"></script>
+<script src="./ui.js"> </script>

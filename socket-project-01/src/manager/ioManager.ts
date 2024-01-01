@@ -8,11 +8,14 @@ config();
 
 
 const port:string = process.env.PORT;
+
+// creating an httpServer using express
 const app = express();
 app.use(express.static(__dirname + '/public'));
 const httpServer : HttpServer = app.listen(port , () => {console.log(`started on port ${port}`)});
 
 
+// the below code creates a socket server (backend) , using the above HTTP server
 // singleton pattern
 export class IoManager {
     private static io : SockerServer = null;
