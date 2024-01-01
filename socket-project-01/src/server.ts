@@ -1,36 +1,17 @@
 
-// 3rd party from npm
-// const express = require('express');
-// const socketio = require('socket.io')
-// const app = express();
-// const port = 8001
+
+import { IoManager } from './manager/ioManager';
+import { Socket } from "socket.io";
 
 
-// app.use(express.static(__dirname + '/public'));
-// const expressServer = app.listen(port);
-// const io = socketio(expressServer)
+const io = IoManager.getIo();
+
+io.on('connect' , (socket : Socket)=>{
+    const socketId = socket.id
+    console.log(`socket with id=[${socketId}] connected`);
+    // socket.emit('test-1' , {a :1 , b:2 , socketId});
+    io.emit('test-1' , {a :1 , b:2 , socketId});
+});
 
 
 
-// // "io" = entire socketio backend server 
-// // "socket" = just 1 connected socket
-// io.on('connection',(socket)=>{
-//     console.log(socket.id,"has connected")
-//     //in ws we use "send" method, and it socket.io we use the "emit" method
-//     // socket.emit('messageFromServer',{data:"Welcome to the socket server!"})
-//     socket.on('newMessageToServer',(dataFromClient)=>{
-//         console.log("Data:",dataFromClient);
-//         io.emit('newMessageToClients',{text:dataFromClient.text});
-//     });
-// });
-
-
-import express from 'express';
-import {config} from 'dotenv';
-config();
-
-const app = express()
-
-const port:string = process.env.PORT
-
-app.listen(port , () => {console.log(`started on port ${port}`)})
