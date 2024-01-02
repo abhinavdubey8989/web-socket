@@ -22,12 +22,6 @@ io.on('connect' , (socket : Socket)=>{
         io.emit('newMessageToClients' , {fromServer : data.fromClient})
         // sendMsg(data)
     });
-
-
-    socket.on('c-ping' , (data)=>{
-        console.log(data);
-        // socket.emit('s-ping' , {type:'s-ping'});
-    });
 });
 
 

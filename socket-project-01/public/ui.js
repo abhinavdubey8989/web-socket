@@ -9,12 +9,6 @@ socket.on('connect',()=>{
     console.log(`from ui : socket id is [${socket.id}]`)
 });
 
-socket.on('s-ping',(data)=>{
-    console.log(data);
-    socket.emit('c-ping' , {type : 'c-ping'});
-});
-
-
 
 // when server broadcasts the msg , the below listener is executed
 socket.on('newMessageToClients',(data)=>{
@@ -28,5 +22,4 @@ document.querySelector('#message-form').addEventListener('submit',(event)=>{
     const inputText = document.querySelector('#user-message').value
     console.log(inputText);
     socket.emit('newChatMsgFromClient',{fromClient : inputText});
-    socket.emit('c-ping' , {type : 'c-ping'});
 });
