@@ -23,18 +23,15 @@ export class IoManager {
             }
         });
         console.log(`socket server up ...`)
-      }
-
- 
+    }
 
     public static getInstance(httpServer: HttpServer): IoManager {
         if (!IoManager.instance) {
           IoManager.instance = new IoManager(httpServer);
         }
         return IoManager.instance;
-      }
+    }
     
-
     public getIo() : SockerServer { 
         return this.io ;
     }
