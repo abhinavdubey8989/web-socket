@@ -1,6 +1,7 @@
 
-const port = 3000 ; //this port refers to the backend port
+const port = 7800 ; //this port refers to the backend port
 const backendUrl = `http://localhost:${port}`;
+console.log(backendUrl);
 
 const socket = io(backendUrl);
 
