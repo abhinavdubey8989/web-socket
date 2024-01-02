@@ -7,3 +7,11 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
+    networks:
+      - my-bridge-network
+
+
+
+networks:
+  my-bridge-network:
+    driver: bridge
