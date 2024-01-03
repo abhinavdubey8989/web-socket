@@ -5,6 +5,7 @@ import { Server as HttpServer} from "http";
 import { sendMsg } from "./sendMsgToClient";
 import os from 'os';
 import { config } from 'dotenv';
+import { PubSubManager } from "./redisManager";
 config();
 
 // the below code creates a socket server (backend) , using the above HTTP server
@@ -37,25 +38,29 @@ export class IoManager {
     }
 
     public initIo(){
-      this.io.on('connect' , (socket : Socket)=>{
 
-        const socketId = socket.id;
+        const pubSubManager = PubSubManager.getInstance();
+        pubSubManager.getSub().subscriber("RMSG");
 
-        // greetings from server ... :)
-        socket.emit('serverInfo' , {uiSocketId : socketId , port : process.env.PORT , hostName : os.hostname()});
+        this.io.on('connect' , (socket : Socket)=>{
+            const socketId = socket.id;
 
-        // when a ui-socket sends the "newChatMsgFromClient" event 
-        // the below logic is executed
-        // this logic broadcasts the msgs to call connected sockets
-        socket.on('newChatMsgFromClient' , (data) => {
-            console.log(`server inside newChatMsgFromClient`);
-            console.log(data);
+            // greetings from server ... :)
+            socket.emit('serverInfo' , {uiSocketId : socketId , port : process.env.PORT , hostName : os.hostname()});
 
-            // we can do either of below , "sendMsg" was added to just check modularity
-            // this.io.emit('newMessageToClients' , {fromServer : data.fromClient})
-            sendMsg(this.io , data)
-          });
-      });
+            // when a ui-socket sends the "newChatMsgFromClient" event 
+            // the below logic is executed
+            // this logic broadcasts the msgs to call connected sockets
+            socket.on('newChatMsgFromClient' , async (data) => {
+                console.log(`server inside newChatMsgFromClient`);
+                console.log(data);
+
+                // we can do either of below , "sendMsg" was added to just check modularity
+                // this.io.emit('newMessageToClients' , {fromServer : data.fromClient})
+                sendMsg(this.io , data)
+                await pubSubManager.getPub().publish("RMSG" , JSON.stringify(data));
+            });
+        });
     }
 
 }

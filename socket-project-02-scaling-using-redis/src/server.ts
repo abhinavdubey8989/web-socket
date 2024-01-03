@@ -4,7 +4,6 @@ import { IoManager } from './manager/ioManager';
 import { Server as HttpServer } from "http";
 import express from 'express';
 import { config } from 'dotenv';
-import { PubSubManager } from './manager/redisManager';
 config();
 
 
@@ -20,8 +19,6 @@ const httpServer : HttpServer = app.listen(port , async() => {
     console.log(`started on port ${port}`);
     const io = IoManager.getInstance(httpServer);
     io.initIo();
-
-    await PubSubManager.initPubSubManager();
 });
 
 
