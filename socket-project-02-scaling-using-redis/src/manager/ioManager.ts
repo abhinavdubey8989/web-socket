@@ -6,6 +6,7 @@ import { sendMsg } from "./sendMsgToClient";
 import os from 'os';
 import { config } from 'dotenv';
 import { PubSubManager } from "./redisManager";
+import httpServer from "../server";
 config();
 
 // the below code creates a socket server (backend) , using the above HTTP server
@@ -39,8 +40,17 @@ export class IoManager {
 
     public initIo(){
 
-        const pubSubManager = PubSubManager.getInstance();
-        pubSubManager.getSub().subscriber("RMSG");
+        const pubSubManager = PubSubManager.getInstance(httpServer);
+        const sub = pubSubManager.getSub();
+
+        // the below logic gets executed when redis event is triggered on "redis-message" channel
+        sub.subscribe('redis-message' , (message , channel)=>{
+            const parsedMessage = JSON.parse(message);
+            console.log(`inside sub.subscribe ....channel=[${channel}]`)
+            console.log(`inside sub.subscribe ....message=[${message}]`)
+            this.io.emit('newMessageToClients' , {fromServer : parsedMessage.fromClient})
+        });
+      
 
         this.io.on('connect' , (socket : Socket)=>{
             const socketId = socket.id;
@@ -56,11 +66,14 @@ export class IoManager {
                 console.log(data);
 
                 // we can do either of below , "sendMsg" was added to just check modularity
-                // this.io.emit('newMessageToClients' , {fromServer : data.fromClient})
-                sendMsg(this.io , data)
-                await pubSubManager.getPub().publish("RMSG" , JSON.stringify(data));
+                this.io.emit('newMessageToClients' , {fromServer : data.fromClient})
+                // sendMsg(this.io , data)
+
+                // send to redis
+                await pubSubManager.getPub().publish('redis-message' , JSON.stringify(data));
             });
         });
+
     }
 
 }
