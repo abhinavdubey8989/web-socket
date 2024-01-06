@@ -11,11 +11,13 @@ config();
 
 
 const port:string = process.env.PORT;
+console.log(`given port is ${port}`);
 
 
 // creating an httpServer using express
 const app = express();
 
+// api end points (testing only)
 app.use("/test" , testRouter);
 
 

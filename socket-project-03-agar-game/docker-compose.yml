@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  socket-game-1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: socket-game-1
+    restart: unless-stopped
+    environment:
+      - PORT=${PORT}
+      - REDIS_URL=${REDIS_URL}
+      - WORLD_HEIGHT=${WORLD_HEIGHT}
+      - WORLD_WIDTH=${WORLD_WIDTH}
+      - DEFAULT_SPEED=${DEFAULT_SPEED}
+      - DEFAULT_ZOOM=${DEFAULT_ZOOM}
+    ports:
+      - "8080:8080"
+    networks:
+      - my-bridge-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+networks:
+  my-bridge-network:
+    driver: bridge

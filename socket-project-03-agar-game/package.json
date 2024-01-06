@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
+    "start:prod" : "node /app/server.js",
     "start:dev": "ts-node-dev --respawn --transpile-only --exit-child --watch src src/server.ts"
   },
   "keywords": [],
