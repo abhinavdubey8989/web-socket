@@ -7,6 +7,11 @@ import os from 'os';
 import { config } from 'dotenv';
 import { PubSubManager } from "./redisManager";
 import httpServer from "../server";
+import { PlayerPrivateData } from "../dto/playerPrivateData";
+import { PlayerPublicData } from "../dto/playerPublicData";
+import { PlayerData } from "../dto/playerData";
+import { GameState } from "../dto/gameState";
+import { SocketMsg } from "../dto/socketMessage";
 config();
 
 // the below code creates a socket server (backend) , using the above HTTP server
@@ -14,7 +19,10 @@ config();
 export class IoManager {
     private static instance: IoManager;
     private io: SockerServer;
-  
+    private gameState : GameState;
+    private pubSubManager : PubSubManager;
+
+
     private constructor(httpServer: HttpServer) {
         // Initialize Socket.IO server with the HTTP server instance
         // Additional configuration or event handling can be added here
@@ -24,6 +32,9 @@ export class IoManager {
                 methods : ["GET" , "POST" , "PUT"]
             }
         });
+
+        this.pubSubManager = PubSubManager.getInstance();
+        this.gameState = new GameState();
         console.log(`socket server up ...`)
     }
 
@@ -39,40 +50,54 @@ export class IoManager {
     }
 
     public initIo(){
+        this.subscribeToPubSubEvents();
 
-        const pubSubManager = PubSubManager.getInstance();
-        const sub = pubSubManager.getSub();
-
-        // the below logic gets executed when redis event is triggered on "redis-message" channel
-        sub.subscribe('redis-message' , (message , channel)=>{
-            const parsedMessage = JSON.parse(message);
-            console.log(`inside sub.subscribe ....channel=[${channel}]`)
-            console.log(`inside sub.subscribe ....message=[${message}]`)
-            this.io.emit('newMessageToClients' , {fromServer : parsedMessage.fromClient})
-        });
-      
-
-        this.io.on('connect' , (socket : Socket)=>{
+        this.io.on('connect' , async (socket : Socket)=>{
             const socketId = socket.id;
 
-            // greetings from server ... :)
-            socket.emit('serverInfo' , {uiSocketId : socketId , port : process.env.PORT , hostName : os.hostname()});
+            const playerData = this.gameState.addNewPlayer(socketId);
+            await this.pubSubManager.getPub().publish("pubsub.player.added" , JSON.stringify(playerData));
 
-            // when a ui-socket sends the "newChatMsgFromClient" event 
-            // the below logic is executed
-            // this logic broadcasts the msgs to call connected sockets
-            socket.on('newChatMsgFromClient' , async (data) => {
-                console.log(`server inside newChatMsgFromClient`);
-                console.log(data);
+            if(this.gameState.getPlayerCount() > 0){
+                this.sendRegurlarUpdateToClients();
+            }
 
-                // we can do either of below , "sendMsg" was added to just check modularity
-                this.io.emit('newMessageToClients' , {fromServer : data.fromClient})
-                // sendMsg(this.io , data)
-
-                // send to redis
-                await pubSubManager.getPub().publish('redis-message' , JSON.stringify(data));
+            // when player leaves
+            socket.on('disconnect' , async () => {
+                const playerData = this.gameState.removePlayer(socketId);
+                if(playerData){
+                    await this.pubSubManager.getPub().publish("pubsub.player.removed" , JSON.stringify(playerData));
+                }
             });
         });
 
+      
+
+    }
+
+    private subscribeToPubSubEvents(){
+        const sub = this.pubSubManager.getSub();
+
+        // the below logic gets executed when redis event is triggered on "redis-message" channel
+        sub.subscribe("pubsub.player.added" , (message , channel)=>{
+            const playerData : PlayerData = JSON.parse(message);
+            console.log(`inside [pubsub.player.added] , socketId=[${playerData.socketId}]`);
+            this.gameState.addPubSubPlayer(playerData);
+        });
+
+
+        sub.subscribe("pubsub.player.removed" , (message , channel)=>{
+            const playerData : PlayerData = JSON.parse(message);
+            console.log(`inside [pubsub.player.removed] , socketId=[${playerData.socketId}]`);
+            this.gameState.removePlayer(playerData.socketId);
+        });
+    }
+
+    private sendRegurlarUpdateToClients(){
+        const fn = ()=>{
+            console.log(`sending info of ${this.gameState.getPlayerCount()} players to ui`);
+            this.io.emit('serverInfo' , this.gameState.getPlayerList());
+        };
+        setInterval(fn , 1000);
     }
 }

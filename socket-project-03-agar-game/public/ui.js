@@ -14,6 +14,7 @@ socket.on('connect',()=>{
 
 // when server send the event called "serverInfo" , the below listener is executed
 socket.on('serverInfo',(data)=>{
+    console.log(data);
     document.querySelector('#server-greeting').innerHTML = JSON.stringify(data);
     // document.querySelector('#server-greeting').innerHTML += JSON.stringify(data);
 });
