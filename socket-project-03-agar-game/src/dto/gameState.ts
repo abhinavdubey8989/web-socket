@@ -8,6 +8,7 @@ export class GameState {
     
     constructor(){
         this.playerDataMap = new Map();
+
     }
 
     public addNewPlayer(socketId : string) : PlayerData {
@@ -34,11 +35,15 @@ export class GameState {
         return this.playerDataMap.size || 0;
     }
 
-    public addPubSubPlayer(playerData : PlayerData) : void {
-        if(!playerData){
+    public addPubSubPlayers(playerDataList : PlayerData[]) : void {
+        if(!playerDataList || !playerDataList.length){
             return;
         }
-        this.playerDataMap.set(playerData.socketId , playerData);
+
+        console.log(`inside [addPubSubPlayers] , rcvd-ids=[${playerDataList.map(x=>x.socketId)}]`);
+        playerDataList.forEach(playerData =>{
+            this.playerDataMap.set(playerData.socketId , playerData);
+        });
     }
 }
 

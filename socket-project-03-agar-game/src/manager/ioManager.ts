@@ -12,7 +12,15 @@ import { PlayerPublicData } from "../dto/playerPublicData";
 import { PlayerData } from "../dto/playerData";
 import { GameState } from "../dto/gameState";
 import { SocketMsg } from "../dto/socketMessage";
+import { getValidDataFromJsonString } from "../game-utils/game.utils";
 config();
+
+const PUB_SUB_CHANNEL_MAP = {
+    NEW_PLAYER_ADDED : "pubsub.player.added",
+    PLAYER_REMOVED : "pubsub.player.removed",
+    NEW_SERVER_JOINED : "pubsub.server.joined",
+    PLAYERS_INFO_DUMP_RCVD : "pubsub.server.playersinfodump.received",
+}
 
 // the below code creates a socket server (backend) , using the above HTTP server
 // singleton pattern
@@ -35,7 +43,15 @@ export class IoManager {
 
         this.pubSubManager = PubSubManager.getInstance();
         this.gameState = new GameState();
-        console.log(`socket server up ...`)
+
+        // when a new server spins up , it needs the players data from other servers
+        // for the above , this server will publish a msg in this channel , the handler is defined below
+        this.pubSubManager.getPub().publish(PUB_SUB_CHANNEL_MAP.NEW_SERVER_JOINED , JSON.stringify({
+            server : os.hostname(),
+            port : process.env.PORT
+        }));
+        
+        console.log(`socket server up ...port=[${process.env.PORT}]`)
     }
 
     public static getInstance(): IoManager {
@@ -56,17 +72,18 @@ export class IoManager {
             const socketId = socket.id;
 
             const playerData = this.gameState.addNewPlayer(socketId);
-            await this.pubSubManager.getPub().publish("pubsub.player.added" , JSON.stringify(playerData));
+            await this.pubSubManager.getPub().publish(PUB_SUB_CHANNEL_MAP.NEW_PLAYER_ADDED , JSON.stringify(playerData));
 
             if(this.gameState.getPlayerCount() > 0){
                 this.sendRegurlarUpdateToClients();
             }
 
-            // when player leaves
+            // when player leaves , we need to remove it from current server game state
+            // also we need to remove from other servers , for which we put a msg into channel
             socket.on('disconnect' , async () => {
                 const playerData = this.gameState.removePlayer(socketId);
                 if(playerData){
-                    await this.pubSubManager.getPub().publish("pubsub.player.removed" , JSON.stringify(playerData));
+                    await this.pubSubManager.getPub().publish(PUB_SUB_CHANNEL_MAP.PLAYER_REMOVED , JSON.stringify(playerData));
                 }
             });
         });
@@ -78,26 +95,50 @@ export class IoManager {
     private subscribeToPubSubEvents(){
         const sub = this.pubSubManager.getSub();
 
-        // the below logic gets executed when redis event is triggered on "redis-message" channel
-        sub.subscribe("pubsub.player.added" , (message , channel)=>{
-            const playerData : PlayerData = JSON.parse(message);
-            console.log(`inside [pubsub.player.added] , socketId=[${playerData.socketId}]`);
-            this.gameState.addPubSubPlayer(playerData);
+        // lets say we have 2 servers : s1 , s2 (offering socket connections)
+        // when a new player joins s1 , then we need to update that player's data in s2 as well
+        // the publish msg is in initIo() , the below logic does the update in s2
+        sub.subscribe(PUB_SUB_CHANNEL_MAP.NEW_PLAYER_ADDED , (message , channel)=>{
+            console.log(`inside [${PUB_SUB_CHANNEL_MAP.NEW_PLAYER_ADDED}]`);
+            const playerDataList : PlayerData[] = getValidDataFromJsonString(message);
+            this.gameState.addPubSubPlayers(playerDataList);
         });
 
-
-        sub.subscribe("pubsub.player.removed" , (message , channel)=>{
-            const playerData : PlayerData = JSON.parse(message);
-            console.log(`inside [pubsub.player.removed] , socketId=[${playerData.socketId}]`);
+        // same logic as above , but here we remove a player
+        sub.subscribe(PUB_SUB_CHANNEL_MAP.PLAYER_REMOVED , (message , channel)=>{
+            console.log(`inside [${PUB_SUB_CHANNEL_MAP.PLAYER_REMOVED}]`);
+            const playerData : PlayerData = getValidDataFromJsonString(message);
             this.gameState.removePlayer(playerData.socketId);
+        });
+
+        // lets say due to high traffic , we need to spin up extra server (s3)
+        // when s3 joins , it needs to fetch the data of all players from all servers (in our case , its s1 , s2)
+        // s3 will send a msg , which is there in initIo() , 
+        // when s1 , s2 get this msg , they will emit all their player list
+        // the below logic is in context of s1 , s2 . Here player list is being emitted (from s1 , s2)
+        sub.subscribe(PUB_SUB_CHANNEL_MAP.NEW_SERVER_JOINED , (message , channel)=>{
+            console.log(`inside [${PUB_SUB_CHANNEL_MAP.NEW_SERVER_JOINED}]`);
+            const playerDataList : PlayerData[] = this.gameState.getPlayerList();
+            this.pubSubManager.getPub().publish(PUB_SUB_CHANNEL_MAP.PLAYERS_INFO_DUMP_RCVD , JSON.stringify(playerDataList));
+        });
+
+        // below logic is in context of s3 
+        // it will update its game state basis the dump of s1,s2
+        sub.subscribe(PUB_SUB_CHANNEL_MAP.PLAYERS_INFO_DUMP_RCVD , (message , channel) => {
+            console.log(`inside [${PUB_SUB_CHANNEL_MAP.PLAYERS_INFO_DUMP_RCVD}]`);
+            const playerDataList : PlayerData[] = getValidDataFromJsonString(message);
+            this.gameState.addPubSubPlayers(playerDataList);
         });
     }
 
     private sendRegurlarUpdateToClients(){
         const fn = ()=>{
-            console.log(`sending info of ${this.gameState.getPlayerCount()} players to ui`);
-            this.io.emit('serverInfo' , this.gameState.getPlayerList());
+            const playersConnected = this.gameState.getPlayerCount();
+            console.log(`sending info of ${playersConnected} players to ui`);
+            if(playersConnected > 0){
+                this.io.emit('serverInfo' , this.gameState.getPlayerList());
+            }
         };
-        setInterval(fn , 1000);
+        setInterval(fn , 5 * 1000);
     }
 }

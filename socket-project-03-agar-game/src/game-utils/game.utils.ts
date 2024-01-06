@@ -22,3 +22,17 @@ export function getRandomRGBString() : string{
     const b = getRandomNum(200 , 50);
     return `rgb(${r},${g},${b})`;
 }
+
+/**
+ * 
+ * @returns json.parsed data or null
+ */
+export function getValidDataFromJsonString(jsonStringifiedMsg) : any {
+    try{
+        const parsedData = JSON.parse(jsonStringifiedMsg);
+        return parsedData;
+    }catch(e){
+        console.log(`invalid data in getValidDataFromJsonString`)
+        return null;
+    }
+}
