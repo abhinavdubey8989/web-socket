@@ -12,7 +12,7 @@ import { PlayerPublicData } from "../dto/playerPublicData";
 import { PlayerData } from "../dto/playerData";
 import { GameState } from "../dto/gameState";
 import { SocketMsg } from "../dto/socketMessage";
-import { getValidDataFromJsonString } from "../game-utils/game.utils";
+import { getServerDetails, getValidDataFromJsonString, isSelf } from "../game-utils/game.utils";
 config();
 
 const PUB_SUB_CHANNEL_MAP = {
@@ -46,10 +46,8 @@ export class IoManager {
 
         // when a new server spins up , it needs the players data from other servers
         // for the above , this server will publish a msg in this channel , the handler is defined below
-        this.pubSubManager.getPub().publish(PUB_SUB_CHANNEL_MAP.NEW_SERVER_JOINED , JSON.stringify({
-            server : os.hostname(),
-            port : process.env.PORT
-        }));
+        const pubSubMsg : SocketMsg<any> = new SocketMsg(getServerDetails()) 
+        this.pubSubManager.getPub().publish(PUB_SUB_CHANNEL_MAP.NEW_SERVER_JOINED , JSON.stringify(pubSubMsg));
         
         console.log(`socket server up ...port=[${process.env.PORT}]`)
     }
@@ -72,18 +70,20 @@ export class IoManager {
             const socketId = socket.id;
 
             const playerData = this.gameState.addNewPlayer(socketId);
-            await this.pubSubManager.getPub().publish(PUB_SUB_CHANNEL_MAP.NEW_PLAYER_ADDED , JSON.stringify(playerData));
+            const pubSubMsg : SocketMsg<PlayerData> = new SocketMsg(playerData);
+            await this.pubSubManager.getPub().publish(PUB_SUB_CHANNEL_MAP.NEW_PLAYER_ADDED , JSON.stringify(pubSubMsg));
 
             if(this.gameState.getPlayerCount() > 0){
-                this.sendRegurlarUpdateToClients();
+                this.sendRegurlarUpdateToClients(socket);
             }
 
             // when player leaves , we need to remove it from current server game state
             // also we need to remove from other servers , for which we put a msg into channel
             socket.on('disconnect' , async () => {
-                const playerData = this.gameState.removePlayer(socketId);
+                const playerData2 = this.gameState.removePlayer(socketId);
+                const pubSubMsg2 : SocketMsg<PlayerData> = new SocketMsg(playerData2);
                 if(playerData){
-                    await this.pubSubManager.getPub().publish(PUB_SUB_CHANNEL_MAP.PLAYER_REMOVED , JSON.stringify(playerData));
+                    await this.pubSubManager.getPub().publish(PUB_SUB_CHANNEL_MAP.PLAYER_REMOVED , JSON.stringify(pubSubMsg2));
                 }
             });
         });
@@ -99,16 +99,30 @@ export class IoManager {
         // when a new player joins s1 , then we need to update that player's data in s2 as well
         // the publish msg is in initIo() , the below logic does the update in s2
         sub.subscribe(PUB_SUB_CHANNEL_MAP.NEW_PLAYER_ADDED , (message , channel)=>{
-            console.log(`inside [${PUB_SUB_CHANNEL_MAP.NEW_PLAYER_ADDED}]`);
-            const playerDataList : PlayerData[] = getValidDataFromJsonString(message);
-            this.gameState.addPubSubPlayers(playerDataList);
+            const pubSubMsg : SocketMsg<PlayerData[]> = getValidDataFromJsonString(message);
+            if(!pubSubMsg){
+                return;
+            }
+            const fromServerId = pubSubMsg.serverId;
+            if(isSelf(fromServerId)){
+                return;
+            }
+            console.log(`inside [${PUB_SUB_CHANNEL_MAP.NEW_PLAYER_ADDED}] , fromServerId=[${fromServerId}] , self=[${isSelf(fromServerId)}]`);
+            this.gameState.addPubSubPlayers(pubSubMsg.data);
         });
 
         // same logic as above , but here we remove a player
         sub.subscribe(PUB_SUB_CHANNEL_MAP.PLAYER_REMOVED , (message , channel)=>{
-            console.log(`inside [${PUB_SUB_CHANNEL_MAP.PLAYER_REMOVED}]`);
-            const playerData : PlayerData = getValidDataFromJsonString(message);
-            this.gameState.removePlayer(playerData.socketId);
+            const pubSubMsg : SocketMsg<PlayerData> = getValidDataFromJsonString(message);
+            if(!pubSubMsg){
+                return;
+            }
+            const fromServerId = pubSubMsg.serverId;
+            if(isSelf(fromServerId)){
+                return;
+            }
+            console.log(`inside [${PUB_SUB_CHANNEL_MAP.PLAYER_REMOVED}] , fromServerId=[${fromServerId}] , self=[${isSelf(fromServerId)}]`);
+            this.gameState.removePlayer(pubSubMsg.data.socketId);
         });
 
         // lets say due to high traffic , we need to spin up extra server (s3)
@@ -119,27 +133,35 @@ export class IoManager {
         sub.subscribe(PUB_SUB_CHANNEL_MAP.NEW_SERVER_JOINED , (message , channel)=>{
             console.log(`inside [${PUB_SUB_CHANNEL_MAP.NEW_SERVER_JOINED}]`);
             const playerDataList : PlayerData[] = this.gameState.getPlayerList();
-            this.pubSubManager.getPub().publish(PUB_SUB_CHANNEL_MAP.PLAYERS_INFO_DUMP_RCVD , JSON.stringify(playerDataList));
+            const pubSubMsg : SocketMsg<PlayerData[]> = new SocketMsg(playerDataList);
+            this.pubSubManager.getPub().publish(PUB_SUB_CHANNEL_MAP.PLAYERS_INFO_DUMP_RCVD , JSON.stringify(pubSubMsg));
         });
 
         // below logic is in context of s3 
         // it will update its game state basis the dump of s1,s2
         sub.subscribe(PUB_SUB_CHANNEL_MAP.PLAYERS_INFO_DUMP_RCVD , (message , channel) => {
-            console.log(`inside [${PUB_SUB_CHANNEL_MAP.PLAYERS_INFO_DUMP_RCVD}]`);
-            const playerDataList : PlayerData[] = getValidDataFromJsonString(message);
-            this.gameState.addPubSubPlayers(playerDataList);
+            const pubSubMsg : SocketMsg<PlayerData[]> = getValidDataFromJsonString(message);
+            if(!pubSubMsg){
+                return;
+            }
+            const fromServerId = pubSubMsg.serverId;
+            if(isSelf(fromServerId)){
+                return;
+            }
+            console.log(`inside [${PUB_SUB_CHANNEL_MAP.PLAYERS_INFO_DUMP_RCVD}] , fromServerId=[${fromServerId}] , self=[${isSelf(fromServerId)}]`);
+            this.gameState.addPubSubPlayers(pubSubMsg.data);
         });
     }
 
-    private sendRegurlarUpdateToClients(){
+    private sendRegurlarUpdateToClients(socket : Socket){
         const fn = ()=>{
             const playersConnected = this.gameState.getPlayerCount();
             console.log(`sending info of ${playersConnected} players to ui`);
-            const sockerServerMsg : SocketMsg<PlayerData[]> = new SocketMsg(this.gameState.getPlayerList());
+            const sockerServerMsg : SocketMsg<PlayerData[]> = new SocketMsg(this.gameState.getPlayerList() , socket.id);
             if(playersConnected > 0){
                 this.io.emit('serverInfo' , sockerServerMsg);
             }
         };
-        setInterval(fn , 5 * 1000);
+        setInterval(fn , 1 * 1000);
     }
 }

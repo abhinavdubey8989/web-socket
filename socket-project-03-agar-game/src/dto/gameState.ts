@@ -15,7 +15,6 @@ export class GameState {
         const playerPrivateData = new PlayerPrivateData();
         const playerPublicData = new PlayerPublicData("rob");
         const playerData = new PlayerData(socketId , playerPrivateData , playerPublicData);
-        console.log(playerData);
         this.playerDataMap.set(socketId , playerData);
         return playerData;
     }

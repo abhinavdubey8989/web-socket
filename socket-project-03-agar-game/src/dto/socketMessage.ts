@@ -3,15 +3,15 @@ import os from 'os';
 
 export class SocketMsg<T> {
 
-    private timeStamp : number;
-    private entity : string;
-    private entityId : string;
-    private data : T;
-    
-    constructor(data : T){
+    timeStamp : number;
+    serverId : string;
+    socketId : string;
+    data : T;
+
+    constructor(data : T , socketId = ""){
         this.timeStamp = Date.now();
-        this.entity = `SERVER :: ${process.env.PORT}`;
-        this.entityId = os.hostname();
+        this.serverId = os.hostname();
+        this.socketId = socketId;
         this.data = data;
     }
 

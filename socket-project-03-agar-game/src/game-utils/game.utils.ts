@@ -42,10 +42,20 @@ export function getValidDataFromJsonString(jsonStringifiedMsg) : any {
 
 /**
  * 
- * @returns json.parsed data or null
+ * @returns 
  */
 export function getServerDetails() {
     const port = process.env.PORT;
     const host = os.hostname();
     return {host , port};
+}
+
+
+/**
+ * 
+ * @returns 
+ */
+export function isSelf(serverId) {
+    const host = os.hostname();
+    return host===serverId;
 }

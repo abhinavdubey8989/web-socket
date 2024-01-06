@@ -23,12 +23,15 @@ socket.on('serverInfo',(dataFromServer)=>{
     const serverId = dataFromServer.entityId;
     const playerDataList = dataFromServer.data || []
     const playerCount = playerDataList.length;
-    const ids = playerDataList.map(x=>x.socketId).sort();
+    const currSocketId = dataFromServer.socketId;
+    const ids = playerDataList.map(x=>x.socketId).sort().join(" , ");
 
     document.querySelector('#server-greeting-ul').innerHTML = ``
+    document.querySelector('#server-greeting-ul').innerHTML += `<li><h1>UI-1<h1></li>`
     document.querySelector('#server-greeting-ul').innerHTML += `<li>timeStamp : ${timeStamp}</li>`
     document.querySelector('#server-greeting-ul').innerHTML += `<li>serverId : ${serverId}</li>`
     document.querySelector('#server-greeting-ul').innerHTML += `<li>playerCount : ${playerCount}</li>`
+    // document.querySelector('#server-greeting-ul').innerHTML += `<li>currSocketId : ${currSocketId}</li>`
     document.querySelector('#server-greeting-ul').innerHTML += `<li>ids : ${ids}</li>`
 
     // document.querySelector('#server-greeting').innerHTML += JSON.stringify(data);

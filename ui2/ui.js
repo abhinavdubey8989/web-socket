@@ -26,6 +26,7 @@ socket.on('serverInfo',(dataFromServer)=>{
     const ids = playerDataList.map(x=>x.socketId).sort();
 
     document.querySelector('#server-greeting-ul').innerHTML = ``
+    document.querySelector('#server-greeting-ul').innerHTML += `<li><h1>UI-2<h1></li>`
     document.querySelector('#server-greeting-ul').innerHTML += `<li>timeStamp : ${timeStamp}</li>`
     document.querySelector('#server-greeting-ul').innerHTML += `<li>serverId : ${serverId}</li>`
     document.querySelector('#server-greeting-ul').innerHTML += `<li>playerCount : ${playerCount}</li>`
