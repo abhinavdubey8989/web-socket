@@ -70,7 +70,7 @@ export class IoManager {
             const socketId = socket.id;
 
             const playerData = this.gameState.addNewPlayer(socketId);
-            const pubSubMsg : SocketMsg<PlayerData> = new SocketMsg(playerData);
+            const pubSubMsg : SocketMsg<PlayerData[]> = new SocketMsg([playerData]);
             await this.pubSubManager.getPub().publish(PUB_SUB_CHANNEL_MAP.NEW_PLAYER_ADDED , JSON.stringify(pubSubMsg));
 
             if(this.gameState.getPlayerCount() > 0){
