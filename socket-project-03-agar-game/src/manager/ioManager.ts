@@ -104,9 +104,6 @@ export class IoManager {
                 return;
             }
             const fromServerId = pubSubMsg.serverId;
-            if(isSelf(fromServerId)){
-                return;
-            }
             console.log(`inside [${PUB_SUB_CHANNEL_MAP.NEW_PLAYER_ADDED}] , fromServerId=[${fromServerId}] , self=[${isSelf(fromServerId)}]`);
             this.gameState.addPubSubPlayers(pubSubMsg.data);
         });
@@ -118,9 +115,6 @@ export class IoManager {
                 return;
             }
             const fromServerId = pubSubMsg.serverId;
-            if(isSelf(fromServerId)){
-                return;
-            }
             console.log(`inside [${PUB_SUB_CHANNEL_MAP.PLAYER_REMOVED}] , fromServerId=[${fromServerId}] , self=[${isSelf(fromServerId)}]`);
             this.gameState.removePlayer(pubSubMsg.data.socketId);
         });
@@ -145,9 +139,6 @@ export class IoManager {
                 return;
             }
             const fromServerId = pubSubMsg.serverId;
-            if(isSelf(fromServerId)){
-                return;
-            }
             console.log(`inside [${PUB_SUB_CHANNEL_MAP.PLAYERS_INFO_DUMP_RCVD}] , fromServerId=[${fromServerId}] , self=[${isSelf(fromServerId)}]`);
             this.gameState.addPubSubPlayers(pubSubMsg.data);
         });
