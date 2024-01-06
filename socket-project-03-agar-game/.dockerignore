@@ -2,6 +2,7 @@
 
 node_modules/
 Dockerfile
+dist/
 docker-compose.yml
 *.md
 *.sh

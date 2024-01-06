@@ -1,18 +1,23 @@
-import { Router } from "express";
+import { Router , Request} from "express";
 import { IoManager } from "../manager/ioManager";
 import { PubSubManager } from "../manager/redisManager";
+import { getServerDetails } from "../game-utils/game.utils";
 
 
 const router = Router();
 
-router.get("/app" , (re, res)=>{
+router.get("/app" , (req : Request , res)=>{
 
     // const io = IoManager.getInstance().getIo();
     // const pub = PubSubManager.getInstance().getPub()
     // console.log(io);
-    // console.log(pub);
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.removeHeader('ETag');
+    res.removeHeader('Last-Modified');
 
-    res.json({a:1 , b:2 , c:3});
+    console.log(`inside ${req.url} ...`);
+    res.json(getServerDetails());
+
 });
 
 export { router } ;

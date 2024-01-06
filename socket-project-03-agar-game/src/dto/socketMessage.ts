@@ -10,8 +10,8 @@ export class SocketMsg<T> {
     
     constructor(data : T){
         this.timeStamp = Date.now();
-        this.entity = `SERVER:${process.env.PORT}`;
-        this.entity = os.hostname();
+        this.entity = `SERVER :: ${process.env.PORT}`;
+        this.entityId = os.hostname();
         this.data = data;
     }
 

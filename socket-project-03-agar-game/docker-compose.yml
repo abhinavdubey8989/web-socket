@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        CACHEBUST: ${CACHEBUST:-1}
     container_name: socket-game-1
     restart: unless-stopped
     environment:
@@ -15,7 +17,7 @@ services:
       - DEFAULT_SPEED=${DEFAULT_SPEED}
       - DEFAULT_ZOOM=${DEFAULT_ZOOM}
     ports:
-      - "8080:8080"
+      - ${PORT}:${PORT}
     networks:
       - my-bridge-network
     extra_hosts:

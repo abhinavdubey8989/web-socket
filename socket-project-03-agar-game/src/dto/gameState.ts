@@ -26,8 +26,8 @@ export class GameState {
         return playerData;
     }
 
-    public getPlayerList(){
-        return Array.from(this.playerDataMap.values());
+    public getPlayerList() : PlayerData[]{
+        return Array.from(this.playerDataMap.values()) || [];
         // return this.playerDataMap.;
     }
 

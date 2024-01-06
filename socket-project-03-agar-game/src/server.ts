@@ -8,10 +8,7 @@ import { PubSubManager } from './manager/redisManager';
 import { router as testRouter} from './routes/test.router';
 config();
 
-
-
 const port:string = process.env.PORT;
-console.log(`given port is ${port}`);
 
 
 // creating an httpServer using express
@@ -23,7 +20,7 @@ app.use("/test" , testRouter);
 
 // app.use(express.static(path.join(__dirname, '..', 'public')));
 const httpServer : HttpServer = app.listen(port , async() => {
-    console.log(`started on port ${port}`);
+    console.log(`started on port ${port} ...`);
     PubSubManager.getInstance()
 });
 

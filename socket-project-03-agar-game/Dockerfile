@@ -9,6 +9,5 @@ RUN npm ci
 
 COPY . .
 RUN npm run build
-COPY dist/  .
 RUN rm -rf src
 CMD [ "npm", "run" , "start:prod"]÷

@@ -135,8 +135,9 @@ export class IoManager {
         const fn = ()=>{
             const playersConnected = this.gameState.getPlayerCount();
             console.log(`sending info of ${playersConnected} players to ui`);
+            const sockerServerMsg : SocketMsg<PlayerData[]> = new SocketMsg(this.gameState.getPlayerList());
             if(playersConnected > 0){
-                this.io.emit('serverInfo' , this.gameState.getPlayerList());
+                this.io.emit('serverInfo' , sockerServerMsg);
             }
         };
         setInterval(fn , 5 * 1000);

@@ -1,6 +1,8 @@
 
 
 
+import os from 'os';
+
 /**
  * 
  * @param multiplier 
@@ -35,4 +37,15 @@ export function getValidDataFromJsonString(jsonStringifiedMsg) : any {
         console.log(`invalid data in getValidDataFromJsonString`)
         return null;
     }
+}
+
+
+/**
+ * 
+ * @returns json.parsed data or null
+ */
+export function getServerDetails() {
+    const port = process.env.PORT;
+    const host = os.hostname();
+    return {host , port};
 }
