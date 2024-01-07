@@ -3,9 +3,64 @@
 
 
 
+// const draw = () => {
+
+// 	// console.log(`inside draw ...uiCurrentPlayer=[${JSON.stringify(uiCurrentPlayer)}]`);
+
+// 	//reset the context traslate back to default
+// 	context.setTransform(1, 0, 0, 1, 0, 0);
+
+// 	//clearRect clears out the canvas, so we can draw on a clean canvas next frame/draw()
+// 	context.clearRect(0, 0, canvas.width, canvas.height)
+
+// 	//clamp the screen/vp to the players location (x,y)
+// 	const camX = -uiCurrentPlayer.x + canvas.width / 2
+// 	const camY = -uiCurrentPlayer.y + canvas.height / 2
+
+// 	//translate moves the cavnas/context to where the player is at
+// 	context.translate(camX, camY)
+
+
+// 	//draw all the players
+// 	uiPlayerList.forEach(p => {
+// 		if (!p) {
+// 			//if the playerData doesn't exist, this is an absobred player and we don't draw
+// 			return
+// 		}
+
+// 		context.beginPath()
+// 		// context.fillStyle = 'rgb(255,0,0)' //p.color;
+// 		context.fillStyle = p.color;
+
+// 		context.arc(p.x, p.y, p.radius, 0, Math.PI * 2) //draw an arc/circle
+// 		// context.arc(200,200,10,0,Math.PI*2) //draw an arc/circle
+// 		//arg1 and arg2 are center x and centery of the arc
+// 		//arg3 = radius of the circle
+// 		//arg4 = where to start drawing in radians - 0 = 3:00
+// 		//arg 5 = where to stop drawing in radians - Pi = 90deg
+// 		context.fill();
+// 		context.lineWidth = 3; //how wide to draw a line in pixels
+// 		context.strokeStyle = 'rgb(0,255,0)' // draw a green line
+// 		context.stroke() //draw the line (border)
+// 	});
+
+// 	//draw all the orbs
+// 	uiOrbList.forEach(orb => {
+// 		context.beginPath(); //this will start a new path
+// 		context.fillStyle = 'rgb(255,255,255)' //orb.orbColor
+// 		context.arc(orb.orbX, orb.orbY, orb.orbRadius, 0, Math.PI * 2);
+// 		context.fill();
+// 	})
+
+// 	// requestAnimationFrame is like a controlled loop
+// 	// it runs recursively, every paint/frame. If the framerate is 35 fps , then it gets called 35 times in 1 sec
+// 	requestAnimationFrame(draw);
+// }
+
+
 const draw = () => {
 
-	// console.log(`inside draw ...uiCurrentPlayer=[${JSON.stringify(uiCurrentPlayer)}]`);
+	console.log(`inside draw ...uiCurrentPlayer=[${JSON.stringify(uiCurrentPlayer)}]`);
 
 	//reset the context traslate back to default
 	context.setTransform(1, 0, 0, 1, 0, 0);
@@ -27,17 +82,9 @@ const draw = () => {
 			//if the playerData doesn't exist, this is an absobred player and we don't draw
 			return
 		}
-
 		context.beginPath()
-		// context.fillStyle = 'rgb(255,0,0)' //p.color;
 		context.fillStyle = p.color;
-
-		context.arc(p.x, p.y, p.radius, 0, Math.PI * 2) //draw an arc/circle
-		// context.arc(200,200,10,0,Math.PI*2) //draw an arc/circle
-		//arg1 and arg2 are center x and centery of the arc
-		//arg3 = radius of the circle
-		//arg4 = where to start drawing in radians - 0 = 3:00
-		//arg 5 = where to stop drawing in radians - Pi = 90deg
+		context.arc(p.x, p.y, p.radius, 0, Math.PI * 2)
 		context.fill();
 		context.lineWidth = 3; //how wide to draw a line in pixels
 		context.strokeStyle = 'rgb(0,255,0)' // draw a green line
@@ -47,16 +94,16 @@ const draw = () => {
 	//draw all the orbs
 	uiOrbList.forEach(orb => {
 		context.beginPath(); //this will start a new path
-		context.fillStyle = 'rgb(255,255,255)' //orb.orbColor
+		// context.fillStyle = 'rgb(255,255,255)'
+		context.fillStyle = orb.orbColor;
 		context.arc(orb.orbX, orb.orbY, orb.orbRadius, 0, Math.PI * 2);
 		context.fill();
-	})
+	});
 
 	// requestAnimationFrame is like a controlled loop
 	// it runs recursively, every paint/frame. If the framerate is 35 fps , then it gets called 35 times in 1 sec
 	requestAnimationFrame(draw);
 }
-
 
 canvas.addEventListener('mousemove', (event) => {
 	// console.log(event);

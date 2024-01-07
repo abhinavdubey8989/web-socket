@@ -74,12 +74,12 @@ export class IoManager {
             const socketId = socket.id;
 
             socket.on('ui-init', async (uiData: UiInit, uiAckCallBack) => {
-                socket.join('game-room');
+                // socket.join('game-room');
                 const playerData = this.gameState.addNewPlayer(socketId, uiData.playerName);
                 const pubSubMsg: SocketMsg<PlayerData[]> = new SocketMsg([playerData]);
                 await this.pubSubManager.getPub().publish(PUB_SUB_CHANNEL_MAP.NEW_PLAYER_ADDED, JSON.stringify(pubSubMsg));
                 this.sendRegurlarUpdateToClients(socket);
-                const serverData: SocketMsg<ServerInitResp> = new SocketMsg({socketId , orbList : this.gameState.getOrbList()});
+                const serverData: SocketMsg<ServerInitResp> = new SocketMsg({ socketId, orbList: this.gameState.getOrbList() });
                 uiAckCallBack(serverData);
             });
 
@@ -118,7 +118,7 @@ export class IoManager {
             console.log(`sending info of ${playersConnected} players to ui`);
             const sockerServerMsg: SocketMsg<PlayerPublicData[]> = new SocketMsg(this.gameState.getPublicDataListOfAllPlayers());
             if (playersConnected > 0) {
-                this.io.to('game-room').emit('server-tick', sockerServerMsg);
+                this.io.emit('server-tick', sockerServerMsg);
             }
         };
 
@@ -128,7 +128,8 @@ export class IoManager {
     private async updateGameOnUiTock(socket: Socket, uiData: UiTockData) {
         //a tock has come in before the player is set up.
         //this is because the client kept tocking after disconnect
-        const player = this.gameState.getPlayerBySocketId(socket.id);
+        const socketId = socket.id;
+        const player = this.gameState.getPlayerBySocketId(socketId);
         if (!player) {
             return;
         }
@@ -146,30 +147,23 @@ export class IoManager {
         }
 
         //check for the tocking player to hit orbs
-        // const capturedOrbI = checkForOrbCollisions(player.playerData, player.playerConfig, orbs, settings);
-        // //function returns null if not collision, an index if there is a collision
-        // if (capturedOrbI !== null) { //index could be 0, so check !null
-        //     //remove the orb that needs to be replaced (at capturedOrbI)
-        //     //add a new Orb
-        //     orbs.splice(capturedOrbI, 1, new Orb(settings));
+        const orbData = this.gameState.updatePlayerOnOrbCollision(player);
 
-        //     //now update the clients with the new orb
-        //     const orbData = {
-        //         capturedOrbI,
-        //         newOrb: orbs[capturedOrbI],
-        //     }
-        //     //emit to all sockets playing the game, the orbSwitch event so it can update orbs... just the new orb
-        //     io.to('game').emit('orbSwitch', orbData);
-        //     //emit to all sockets playing the game, the updateLeaderBoard event because someone just scored
-        //     io.to('game').emit('updateLeaderBoard', getLeaderBoard());
-        // }
+        //function returns null if not collision, an index if there is a collision
+        if (orbData.orbIdxRemoved > -1) { //index could be 0, so check !null
+            const serverData : SocketMsg<any> = new SocketMsg(orbData) 
+            this.io.emit('server-orb-update', serverData);
+            //emit to all sockets playing the game, the updateLeaderBoard event because someone just scored
+            // io.to('game').emit('updateLeaderBoard', getLeaderBoard());
+        }
 
         // //player collisions of tocking player
-        // const absorbData = checkForPlayerCollisions(player.playerData, player.playerConfig, players, playersForUsers, socket.id)
-        // if (absorbData) {
-        //     io.to('game').emit('playerAbsorbed', absorbData)
-        //     io.to('game').emit('updateLeaderBoard', getLeaderBoard());
-        // }
+        const absorbData = this.gameState.updatePlayerOnPlayerCollision(player)
+        if (absorbData.removedPlayerId) {
+            const serverData : SocketMsg<any> = new SocketMsg(absorbData) 
+            this.io.emit('server-player-absorbed', serverData)
+            // io.to('game').emit('updateLeaderBoard', getLeaderBoard());
+        }
     }
 
     private subscribeToPubSubEvents() {
@@ -190,13 +184,14 @@ export class IoManager {
 
         // same logic as above , but here we remove a player
         sub.subscribe(PUB_SUB_CHANNEL_MAP.PLAYER_REMOVED, (message, channel) => {
-            const pubSubMsg: SocketMsg<PlayerData> = getValidDataFromJsonString(message);
+            const pubSubMsg: SocketMsg<string> = getValidDataFromJsonString(message);
             if (!pubSubMsg) {
                 return;
             }
+            const removedSocketId = pubSubMsg.mainData
             const fromServerId = pubSubMsg.serverId;
             console.log(`inside [${PUB_SUB_CHANNEL_MAP.PLAYER_REMOVED}] , fromServerId=[${fromServerId}] , self=[${isSelf(fromServerId)}]`);
-            this.gameState.removePlayer(pubSubMsg.mainData.socketId);
+            this.gameState.removePlayer(removedSocketId);
         });
 
         // lets say due to high traffic , we need to spin up extra server (s3)

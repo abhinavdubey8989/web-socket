@@ -13,6 +13,8 @@ export class PlayerPublicData{
     color : string ;
     score : number;
     orbsAbsorbed : number;
+    playersAbsorbed : number;
+
 
     constructor(socketId : string , playerName:string){
         this.name = playerName;
@@ -22,6 +24,7 @@ export class PlayerPublicData{
         this.color = getRandomRGBString();
         this.score = 0;
         this.orbsAbsorbed = 0;
+        this.playersAbsorbed = 0;
         this.socketId = socketId;
     }
 }
