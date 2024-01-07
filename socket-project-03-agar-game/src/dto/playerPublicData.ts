@@ -7,8 +7,8 @@ export class PlayerPublicData{
 
     socketId : string;
     name : string;
-    xVector : number;
-    yVector : number;
+    x : number;
+    y : number;
     radius : number;
     color : string ;
     score : number;
@@ -16,8 +16,8 @@ export class PlayerPublicData{
 
     constructor(socketId : string , playerName:string){
         this.name = playerName;
-        this.xVector = getRandomNum(GAME_SETTINGS.worldHeight);
-        this.yVector = getRandomNum(GAME_SETTINGS.worldWidth);
+        this.x = getRandomNum(GAME_SETTINGS.worldHeight);
+        this.y = getRandomNum(GAME_SETTINGS.worldWidth);
         this.radius = 10;
         this.color = getRandomRGBString();
         this.score = 0;
