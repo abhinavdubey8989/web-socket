@@ -7,3 +7,4 @@ docker-compose.yml
 *.md
 *.sh
 .vscode
+public/
