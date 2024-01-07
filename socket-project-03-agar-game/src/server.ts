@@ -4,7 +4,7 @@ import { IoManager } from './manager/ioManager';
 import { Server as HttpServer } from "http";
 import express from 'express';
 import { config } from 'dotenv';
-import { PubSubManager } from './manager/redisManager';
+import { PubSubManager } from './manager/pubSubManager';
 import { router as testRouter} from './routes/test.router';
 config();
 

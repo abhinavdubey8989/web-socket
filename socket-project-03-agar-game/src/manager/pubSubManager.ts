@@ -26,8 +26,9 @@ export class PubSubManager {
             io.initIo();
             
           }).catch(e =>{
-            console.log(`errorrrrr to redis client !!`);
-          })
+            console.log(`error while connecting to redis client !!`);
+            console.log(JSON.stringify(e));
+          });
       
 
 

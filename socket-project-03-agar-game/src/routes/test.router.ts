@@ -1,6 +1,6 @@
 import { Router , Request} from "express";
 import { IoManager } from "../manager/ioManager";
-import { PubSubManager } from "../manager/redisManager";
+import { PubSubManager } from "../manager/pubSubManager";
 import { getServerDetails } from "../game-utils/game.utils";
 
 
