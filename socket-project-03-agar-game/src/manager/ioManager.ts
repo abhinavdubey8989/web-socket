@@ -122,7 +122,7 @@ export class IoManager {
             }
         };
 
-        this.tickTockInterval = setInterval(fn, 1 * 1000);
+        this.tickTockInterval = setInterval(fn, 33);
     }
 
     private async updateGameOnUiTock(socket: Socket, uiData: UiTockData) {

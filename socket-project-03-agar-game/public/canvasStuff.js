@@ -28,17 +28,18 @@ const draw = () => {
 			return
 		}
 
-		// console.log(`drawing players ...p=[${JSON.stringify(p)}]`);
 		context.beginPath()
-		context.fillStyle = 'rgb(255,0,0)' //p.color;
-		context.arc(p.x, p.y, 100, 0, Math.PI * 2) //draw an arc/circle
+		// context.fillStyle = 'rgb(255,0,0)' //p.color;
+		context.fillStyle = p.color;
+
+		context.arc(p.x, p.y, p.radius, 0, Math.PI * 2) //draw an arc/circle
 		// context.arc(200,200,10,0,Math.PI*2) //draw an arc/circle
 		//arg1 and arg2 are center x and centery of the arc
 		//arg3 = radius of the circle
 		//arg4 = where to start drawing in radians - 0 = 3:00
 		//arg 5 = where to stop drawing in radians - Pi = 90deg
 		context.fill();
-		context.lineWidth = 100; //how wide to draw a line in pixels
+		context.lineWidth = 3; //how wide to draw a line in pixels
 		context.strokeStyle = 'rgb(0,255,0)' // draw a green line
 		context.stroke() //draw the line (border)
 	});

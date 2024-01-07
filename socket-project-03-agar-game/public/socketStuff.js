@@ -32,7 +32,6 @@ socket.on('server-tick', (serverData) => {
     uiCurrentPlayer.x = currPlayer.x;
     uiCurrentPlayer.y = currPlayer.y;
     console.log(`inside server-tick , uiCurrentPlayer=[${JSON.stringify(uiCurrentPlayer)}]`);
-    draw();
 });
 
 function sendDataToServer() {
