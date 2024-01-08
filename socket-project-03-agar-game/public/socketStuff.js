@@ -49,15 +49,49 @@ socket.on('server-orb-update', (serverOrbData) => {
     const orbIdxRemoved = serverOrbData.mainData.orbIdxRemoved;
     const newOrbData = serverOrbData.mainData.newOrbData;
 
-    uiOrbList.splice(orbIdxRemoved , 1 , newOrbData);
+    uiOrbList.splice(orbIdxRemoved, 1, newOrbData);
 });
 
 
-socket.on('server-player-absorbed', serverAbsorbData=>{
+// socket.on('server-player-absorbed', serverAbsorbData=>{
+//     document.querySelector('#game-message').innerHTML = `${serverAbsorbData.mainData.removedPlayerName} was absorbed by ${serverAbsorbData.mainData.updatedPlayer.playerPublicData.name}`
+//     document.querySelector('#game-message').style.opacity = 1;
+//     window.setTimeout(()=>{
+//         document.querySelector('#game-message').style.opacity = 0;
+//     },2000)
+// });
 
+
+socket.on('server-player-absorbed-and-removed', serverAbsorbData => {
+
+    const alertMsg = `You were absorbed by ${serverAbsorbData.mainData.updatedPlayer.playerPublicData.name}`;
     document.querySelector('#game-message').innerHTML = `${serverAbsorbData.mainData.removedPlayerName} was absorbed by ${serverAbsorbData.mainData.updatedPlayer.playerPublicData.name}`
     document.querySelector('#game-message').style.opacity = 1;
-    window.setTimeout(()=>{
+    window.setTimeout(() => {
         document.querySelector('#game-message').style.opacity = 0;
-    },2000)
-})
+    }, 2000);
+    socket.disconnect();
+    window.alert(alertMsg);
+    canvas.height = 0;
+    canvas.width = 0;
+});
+
+
+
+socket.on('server-leaderboard-update', (serverLeaderBoardData) => {
+    // console.log(leaderBoardArray)
+
+    const leaderBoardArray = serverLeaderBoardData.mainData;
+    leaderBoardArray.sort((a, b) => {
+        return b.score - a.score;
+    });
+    document.querySelector('.leader-board').innerHTML = "";
+    leaderBoardArray.forEach(p => {
+        if (p.name) {
+            document.querySelector('.leader-board').innerHTML += `
+                <li class="leaderboard-player">${p.name} - ${p.score}</li>`
+        }
+    });
+    const el = leaderBoardArray.find(u => u.name === uiCurrentPlayer.name);
+    document.querySelector('.player-score').innerHTML = el.score;
+});

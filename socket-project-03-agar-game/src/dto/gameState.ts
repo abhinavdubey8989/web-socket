@@ -3,10 +3,12 @@ import { Orb } from "./orb";
 import { PlayerData } from "./playerData";
 import { PlayerPrivateData } from "./playerPrivateData";
 import { PlayerPublicData } from "./playerPublicData";
+import { LeaderBoardData, OrbCollisionDto, PlayerCollisionDto } from "./serverDto";
 
 export class GameState {
 
     private playerDataMap: Map<string, PlayerData>;
+    
     private orbList: Orb[];
 
     constructor() {
@@ -73,16 +75,15 @@ export class GameState {
         return this.playerDataMap.get(socketId);
     }
 
-    public updatePlayerOnOrbCollision(playerData: PlayerData) {
-        //ORB COLLISIONS
-
+    //ORB COLLISIONS
+    public updatePlayerOnOrbCollision(playerData: PlayerData) : OrbCollisionDto {
         if (!playerData) {
-            return {orbIdxRemoved : -1 , newOrbData : null};
+            return { orbIdxRemoved: -1, newOrbData: null ,updatedPlayer : null};
         }
 
         const { playerPrivateData, playerPublicData } = playerData;
         const { x: playerX, y: playerY } = playerPublicData;
-        let orbIdxRemoved : number = -1;
+        let orbIdxRemoved: number = -1;
 
         for (let i = 0; i < this.orbList.length; i++) {
             if (orbIdxRemoved > -1) {
@@ -127,16 +128,16 @@ export class GameState {
         };
 
         let newOrbData = null;
-        if(orbIdxRemoved > -1){
+        if (orbIdxRemoved > -1) {
             console.log(`=========================== orb coll ===================`)
             newOrbData = new Orb();
-            this.orbList.splice(orbIdxRemoved , 1 , );
+            this.orbList.splice(orbIdxRemoved, 1, newOrbData);
         }
-        return {orbIdxRemoved , newOrbData};
+        return { orbIdxRemoved, newOrbData , updatedPlayer : playerData };
     }
 
 
-    public updatePlayerOnPlayerCollision(currPlayerData: PlayerData): { removedPlayerName: string , removedPlayerId: string, updatedPlayer: PlayerData } {
+    public updatePlayerOnPlayerCollision(currPlayerData: PlayerData):PlayerCollisionDto {
 
         const allPlayerList = this.getPlayerList();
 
@@ -175,7 +176,7 @@ export class GameState {
                         }
 
                         return {
-                            removedPlayerName : otherPlayer.playerPublicData.name,
+                            removedPlayerName: otherPlayer.playerPublicData.name,
                             removedPlayerId: otherPlayer.socketId,
                             updatedPlayer: currPlayerData,
                         }
@@ -191,10 +192,35 @@ export class GameState {
 
         }
         return {
-            removedPlayerName : null,
+            removedPlayerName: null,
             removedPlayerId: null,
             updatedPlayer: null,
         };
+    }
+
+    public getLeaderBoard() : LeaderBoardData[]{
+        const allPlayers = this.getPlayerList();
+        const leaderBoardArray = allPlayers.map(curPlayer=>{
+            if(curPlayer.playerPublicData){
+                return{
+                    name: curPlayer.playerPublicData.name,
+                    score: curPlayer.playerPublicData.score,
+                }
+            }
+        });
+        return leaderBoardArray;
+    }
+
+    public updateOrbData() : void{
+        const allPlayers = this.getPlayerList();
+        const leaderBoardArray = allPlayers.map(curPlayer=>{
+            if(curPlayer.playerPublicData){
+                return{
+                    name: curPlayer.playerPublicData.name,
+                    score: curPlayer.playerPublicData.score,
+                }
+            }
+        });
     }
 
 }

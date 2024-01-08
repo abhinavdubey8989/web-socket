@@ -16,7 +16,7 @@ import { getServerDetails, getValidDataFromJsonString, isSelf } from "../game-ut
 import { UiInit, UiTockData } from "../dto/uiDto";
 import { Orb } from "../dto/orb";
 import GAME_SETTINGS from "../settings/gameSettings";
-import { ServerInitResp } from "../dto/serverDto";
+import { LeaderBoardData, OrbCollisionDto, PlayerCollisionDto, ServerInitResp } from "../dto/serverDto";
 config();
 
 const PUB_SUB_CHANNEL_MAP = {
@@ -24,6 +24,9 @@ const PUB_SUB_CHANNEL_MAP = {
     PLAYER_REMOVED: 'pubsub.player.removed',
     NEW_SERVER_JOINED: 'pubsub.server.joined',
     PLAYERS_INFO_DUMP_RCVD: 'pubsub.server.playersinfodump.received',
+    ORB_COLLISION_UPDATE: 'pubsub.server.orbcollision.received',
+    PLAYERS_COLLISION_UPDATE: 'pubsub.server.playerscollision.received',
+
 }
 
 // the below code creates a socket server (backend) , using the above HTTP server
@@ -125,6 +128,7 @@ export class IoManager {
         this.tickTockInterval = setInterval(fn, 33);
     }
 
+
     private async updateGameOnUiTock(socket: Socket, uiData: UiTockData) {
         //a tock has come in before the player is set up.
         //this is because the client kept tocking after disconnect
@@ -147,22 +151,24 @@ export class IoManager {
         }
 
         //check for the tocking player to hit orbs
-        const orbData = this.gameState.updatePlayerOnOrbCollision(player);
+        const orbCollisionDto : OrbCollisionDto = this.gameState.updatePlayerOnOrbCollision(player);
+        if (orbCollisionDto.orbIdxRemoved > -1) { //index could be 0, so check !null
+            const serverDataForOrbCollision : SocketMsg<OrbCollisionDto> = new SocketMsg(orbCollisionDto) ;
+            const serverLeaderBoardData : SocketMsg<LeaderBoardData[]> = new SocketMsg(this.gameState.getLeaderBoard()) 
 
-        //function returns null if not collision, an index if there is a collision
-        if (orbData.orbIdxRemoved > -1) { //index could be 0, so check !null
-            const serverData : SocketMsg<any> = new SocketMsg(orbData) 
-            this.io.emit('server-orb-update', serverData);
-            //emit to all sockets playing the game, the updateLeaderBoard event because someone just scored
-            // io.to('game').emit('updateLeaderBoard', getLeaderBoard());
+            this.io.emit('server-orb-update', serverDataForOrbCollision);
+            this.pubSubManager.getPub().publish(PUB_SUB_CHANNEL_MAP.ORB_COLLISION_UPDATE , JSON.stringify(serverDataForOrbCollision));
+            this.io.emit('server-leaderboard-update', serverLeaderBoardData); // update leader-board
         }
 
         // //player collisions of tocking player
-        const absorbData = this.gameState.updatePlayerOnPlayerCollision(player)
-        if (absorbData.removedPlayerId) {
-            const serverData : SocketMsg<any> = new SocketMsg(absorbData) 
-            this.io.emit('server-player-absorbed', serverData)
-            // io.to('game').emit('updateLeaderBoard', getLeaderBoard());
+        const playerCollisionDto : PlayerCollisionDto = this.gameState.updatePlayerOnPlayerCollision(player)
+        if (playerCollisionDto.removedPlayerId) {
+            const serverDataForPlayerCollision : SocketMsg<PlayerCollisionDto> = new SocketMsg(playerCollisionDto);
+
+            socket.broadcast.to(playerCollisionDto.removedPlayerId).emit('server-player-absorbed-and-removed' , serverDataForPlayerCollision);
+            this.pubSubManager.getPub().publish(PUB_SUB_CHANNEL_MAP.PLAYERS_COLLISION_UPDATE , JSON.stringify(serverDataForPlayerCollision));
+            this.io.to('game').emit('server-leaderboard-update', this.gameState.getLeaderBoard());
         }
     }
 
@@ -217,6 +223,27 @@ export class IoManager {
             console.log(`inside [${PUB_SUB_CHANNEL_MAP.PLAYERS_INFO_DUMP_RCVD}] , fromServerId=[${fromServerId}] , self=[${isSelf(fromServerId)}]`);
             this.gameState.addPubSubPlayers(pubSubMsg.mainData);
         });
+
+
+        sub.subscribe(PUB_SUB_CHANNEL_MAP.PLAYERS_COLLISION_UPDATE, (message, channel) => {
+            const pubSubMsg: SocketMsg<PlayerCollisionDto> = getValidDataFromJsonString(message);
+            if (!pubSubMsg) {
+                return;
+            }
+            console.log(`inside [${PUB_SUB_CHANNEL_MAP.PLAYERS_INFO_DUMP_RCVD}] , fromServerId=[${pubSubMsg.serverId}] , self=[${isSelf(pubSubMsg.serverId)}]`);
+            this.gameState.addPubSubPlayers([pubSubMsg.mainData.updatedPlayer]);
+            this.gameState.removePlayer(pubSubMsg.mainData.removedPlayerId);
+        });
+
+        // sub.subscribe(PUB_SUB_CHANNEL_MAP.ORB_COLLISION_UPDATE, (message, channel) => {
+        //     const pubSubMsg: SocketMsg<OrbCollisionDto> = getValidDataFromJsonString(message);
+        //     if (!pubSubMsg) {
+        //         return;
+        //     }
+        //     console.log(`inside [${PUB_SUB_CHANNEL_MAP.PLAYERS_INFO_DUMP_RCVD}] , fromServerId=[${fromServerId}] , self=[${isSelf(fromServerId)}]`);
+        //     this.gameState.addPubSubPlayers([pubSubMsg.mainData.updatedPlayer]);
+        //     this.gameState.updateOrbData(pubSubMsg.mainData.removedPlayerId);
+        // });
     }
 
 }
