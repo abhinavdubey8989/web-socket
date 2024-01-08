@@ -8,8 +8,8 @@ import { LeaderBoardData, OrbCollisionDto, PlayerCollisionDto } from "./serverDt
 export class GameState {
 
     private playerDataMap: Map<string, PlayerData>;
-    
-    private orbList: Orb[];
+    private ordMap: Map<string, Orb>;
+    // private orbList: Orb[];
 
     constructor() {
         this.initGameState();
@@ -20,9 +20,10 @@ export class GameState {
         this.playerDataMap = new Map();
 
         // init orbs
-        this.orbList = [];
+        this.ordMap = new Map();
         for (let i = 0; i < GAME_SETTINGS.initOrbCount; i++) {
-            this.orbList.push(new Orb());
+            const orbId = `${i}`;
+            this.ordMap.set(orbId, new Orb(orbId));
         }
     }
 
@@ -63,7 +64,16 @@ export class GameState {
     }
 
     public getOrbList(): Orb[] {
-        return this.orbList || [];
+        return Array.from(this.ordMap.values()) || [];
+        // return this.orbList || [];
+    }
+
+    private getOrbKeyList(): string[] {
+        try {
+            return Array.from(this.ordMap.keys()) || [];
+        } catch (e) {
+            return [];
+        }
     }
 
     public getPublicDataListOfAllPlayers(): PlayerPublicData[] {
@@ -76,20 +86,21 @@ export class GameState {
     }
 
     //ORB COLLISIONS
-    public updatePlayerOnOrbCollision(playerData: PlayerData) : OrbCollisionDto {
+    public updatePlayerOnOrbCollision(playerData: PlayerData): OrbCollisionDto {
         if (!playerData) {
-            return { orbIdxRemoved: -1, newOrbData: null ,updatedPlayer : null};
+            return { orbIdRemoved: null, newOrbData: null, updatedPlayer: null };
         }
 
         const { playerPrivateData, playerPublicData } = playerData;
         const { x: playerX, y: playerY } = playerPublicData;
-        let orbIdxRemoved: number = -1;
+        let orbIdRemoved: string = null;
 
-        for (let i = 0; i < this.orbList.length; i++) {
-            if (orbIdxRemoved > -1) {
+        const keyListInOrbMap = this.getOrbKeyList();
+            for(let i = 0; i < keyListInOrbMap.length ; i++) {
+            if (orbIdRemoved !== null) {
                 break;
             }
-            const orb = this.orbList[i];
+            const orb = this.ordMap.get(keyListInOrbMap[i]);
             const { orbRadius, orbX } = orb;
 
             if (playerX + playerPublicData.radius + orbRadius > orbX
@@ -122,22 +133,22 @@ export class GameState {
                     }
 
                     // can't hit more than one orb on a tock so break and return
-                    orbIdxRemoved = i;
+                    orbIdRemoved = keyListInOrbMap[i];
                 }
             }
         };
 
         let newOrbData = null;
-        if (orbIdxRemoved > -1) {
-            console.log(`=========================== orb coll ===================`)
-            newOrbData = new Orb();
-            this.orbList.splice(orbIdxRemoved, 1, newOrbData);
+        if (orbIdRemoved !== null) {
+            const newOrbId = 1 + this.getOrbKeyList().length;
+            newOrbData = new Orb(`${newOrbId}`);
+            this.updateOrbData(orbIdRemoved , newOrbData);
         }
-        return { orbIdxRemoved, newOrbData , updatedPlayer : playerData };
+        return { orbIdRemoved, newOrbData, updatedPlayer: playerData };
     }
 
 
-    public updatePlayerOnPlayerCollision(currPlayerData: PlayerData):PlayerCollisionDto {
+    public updatePlayerOnPlayerCollision(currPlayerData: PlayerData): PlayerCollisionDto {
 
         const allPlayerList = this.getPlayerList();
 
@@ -198,11 +209,11 @@ export class GameState {
         };
     }
 
-    public getLeaderBoard() : LeaderBoardData[]{
+    public getLeaderBoard(): LeaderBoardData[] {
         const allPlayers = this.getPlayerList();
-        const leaderBoardArray = allPlayers.map(curPlayer=>{
-            if(curPlayer.playerPublicData){
-                return{
+        const leaderBoardArray = allPlayers.map(curPlayer => {
+            if (curPlayer.playerPublicData) {
+                return {
                     name: curPlayer.playerPublicData.name,
                     score: curPlayer.playerPublicData.score,
                 }
@@ -211,16 +222,9 @@ export class GameState {
         return leaderBoardArray;
     }
 
-    public updateOrbData() : void{
-        const allPlayers = this.getPlayerList();
-        const leaderBoardArray = allPlayers.map(curPlayer=>{
-            if(curPlayer.playerPublicData){
-                return{
-                    name: curPlayer.playerPublicData.name,
-                    score: curPlayer.playerPublicData.score,
-                }
-            }
-        });
+    public updateOrbData(removedOrbId : string , orbToAdd : Orb): void {
+        this.ordMap.delete(removedOrbId);
+        this.ordMap.set(orbToAdd.id , orbToAdd);
     }
 
 }

@@ -16,7 +16,7 @@ export class PlayerCollisionDto {
 
 
 export class OrbCollisionDto {
-    orbIdxRemoved: number; 
+    orbIdRemoved: string; 
     newOrbData: Orb;
     updatedPlayer: PlayerData;
 }
