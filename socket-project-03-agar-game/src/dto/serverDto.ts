@@ -25,3 +25,8 @@ export class LeaderBoardData {
     name: string; 
     score: number;
 }
+
+export class OtherPlayerMovementOrLeaderBoardUpdate {
+    updatedPlayer: PlayerData;
+}
+

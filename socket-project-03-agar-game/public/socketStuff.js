@@ -81,7 +81,13 @@ socket.on('server-player-absorbed-and-removed', serverAbsorbData => {
 socket.on('server-leaderboard-update', (serverLeaderBoardData) => {
     // console.log(leaderBoardArray)
 
-    const leaderBoardArray = serverLeaderBoardData.mainData;
+
+    let leaderBoardArray = serverLeaderBoardData.mainData.filter(x => x!== null  && x !== undefined);
+
+    if(!leaderBoardArray){
+        return;
+    }
+
     leaderBoardArray.sort((a, b) => {
         return b.score - a.score;
     });

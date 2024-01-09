@@ -1,5 +1,6 @@
 
 import os from 'os';
+import { getServerId } from '../game-utils/game.utils';
 
 export class SocketMsg<T> {
 
@@ -10,9 +11,9 @@ export class SocketMsg<T> {
     mainData : T;
 
     constructor(data : T , socketId = ""){
-        this.timeStamp = Date.now();
-        this.serverId = os.hostname();
         this.port = process.env.PORT;
+        this.timeStamp = Date.now();
+        this.serverId = getServerId();
         this.socketId = socketId;
         this.mainData = data;
     }

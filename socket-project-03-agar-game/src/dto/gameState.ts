@@ -155,13 +155,17 @@ export class GameState {
         for (let i = 0; i < allPlayerList.length; i++) {
             const otherPlayer = allPlayerList[i];
 
-            if (otherPlayer.socketId == currPlayerData.socketId) {
+            if (!otherPlayer || !otherPlayer.playerPublicData || otherPlayer.socketId == currPlayerData.socketId) {
                 continue;
             }
 
-            let pLocx = otherPlayer.playerPublicData.x
-            let pLocy = otherPlayer.playerPublicData.y
-            let pR = otherPlayer.playerPublicData.radius
+            let pLocx = otherPlayer.playerPublicData.x;
+            let pLocy = otherPlayer.playerPublicData.y;
+            let pR = otherPlayer.playerPublicData.radius;
+
+            if (!pLocx || !pLocy || !pR) {
+                continue;
+            }
 
             // AABB Test - Axis-aligned bounding boxes
             if (currPlayerData.playerPublicData.x + currPlayerData.playerPublicData.radius + pR > pLocx

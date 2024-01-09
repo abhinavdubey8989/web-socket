@@ -55,7 +55,17 @@ export function getServerDetails() {
  * 
  * @returns 
  */
-export function isSelf(serverId) {
-    const host = os.hostname();
-    return host===serverId;
+export function isSelf(incomingServerId) {
+    const currServer = getServerId();
+    return currServer === incomingServerId;
+}
+
+
+/**
+ * 
+ * @returns 
+ */
+export function getServerId() {
+    const serverId = os.hostname() + ` :: ${process.env.PORT}`;
+    return serverId;
 }

@@ -6,16 +6,13 @@ RUN mkdir -p /app
 # set workdir , all files will be copied here
 WORKDIR /app
 
-# copy important files 
-COPY package.json  .
-COPY package-lock.json  .
-COPY tsconfig.json  .
+
+# copy everythign except .dockerignore
+COPY . .
 
 # generate node_modules
 RUN npm ci
 
-# copy the src
-COPY . .
 
 # generate dist/
 RUN npm run build
