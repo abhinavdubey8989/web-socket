@@ -16,6 +16,8 @@ services:
       - WORLD_WIDTH=${WORLD_WIDTH}
       - DEFAULT_SPEED=${DEFAULT_SPEED}
       - DEFAULT_ZOOM=${DEFAULT_ZOOM}
+      - DEFAULT_GENERIC_ORB_SIZE=${DEFAULT_GENERIC_ORB_SIZE}
+      - INIT_ORB_COUNT=${INIT_ORB_COUNT}
     ports:
       - ${PORT}:${PORT}
     networks:

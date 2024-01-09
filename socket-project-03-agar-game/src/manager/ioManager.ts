@@ -150,6 +150,8 @@ export class IoManager {
             player.playerPublicData.y -= speed * yV;
         }
 
+        let pubSubDataSent = false;
+
         //check for the tocking player to hit orbs
         const orbCollisionDto : OrbCollisionDto = this.gameState.updatePlayerOnOrbCollision(player);
         if (orbCollisionDto.orbIdRemoved !== null) { //index could be 0, so check !null
@@ -159,6 +161,7 @@ export class IoManager {
             this.io.emit('server-orb-update', serverDataForOrbCollision);
             this.pubSubManager.getPub().publish(PUB_SUB_CHANNEL_MAP.ORB_COLLISION_UPDATE , JSON.stringify(serverDataForOrbCollision));
             this.io.emit('server-leaderboard-update', serverLeaderBoardData); // update leader-board
+            pubSubDataSent = true;
         }
 
         // //player collisions of tocking player
@@ -168,7 +171,15 @@ export class IoManager {
 
             socket.broadcast.to(playerCollisionDto.removedPlayerId).emit('server-player-absorbed-and-removed' , serverDataForPlayerCollision);
             this.pubSubManager.getPub().publish(PUB_SUB_CHANNEL_MAP.PLAYERS_COLLISION_UPDATE , JSON.stringify(serverDataForPlayerCollision));
-            this.io.to('game').emit('server-leaderboard-update', this.gameState.getLeaderBoard());
+
+            const serverLeaderBoardData : SocketMsg<LeaderBoardData[]> = new SocketMsg(this.gameState.getLeaderBoard()) 
+            this.io.emit('server-leaderboard-update', serverLeaderBoardData); // update leader-board
+            pubSubDataSent = true;
+        }
+
+        if(!pubSubDataSent){
+            const pubSubMsgForDataNotSent: SocketMsg<PlayerData[]> = new SocketMsg([player]);
+            this.pubSubManager.getPub().publish(PUB_SUB_CHANNEL_MAP.NEW_PLAYER_ADDED , JSON.stringify(pubSubMsgForDataNotSent));
         }
     }
 
@@ -185,16 +196,19 @@ export class IoManager {
             }
             const fromServerId = pubSubMsg.serverId;
             console.log(`inside [${PUB_SUB_CHANNEL_MAP.NEW_PLAYER_ADDED}] , fromServerId=[${fromServerId}] , self=[${isSelf(fromServerId)}]`);
+            if(isSelf(fromServerId)){
+                return;
+            }
             this.gameState.addPubSubPlayers(pubSubMsg.mainData);
         });
 
         // same logic as above , but here we remove a player
         sub.subscribe(PUB_SUB_CHANNEL_MAP.PLAYER_REMOVED, (message, channel) => {
-            const pubSubMsg: SocketMsg<string> = getValidDataFromJsonString(message);
+            const pubSubMsg: SocketMsg<PlayerData> = getValidDataFromJsonString(message);
             if (!pubSubMsg) {
                 return;
             }
-            const removedSocketId = pubSubMsg.mainData
+            const removedSocketId = pubSubMsg.mainData.socketId;
             const fromServerId = pubSubMsg.serverId;
             console.log(`inside [${PUB_SUB_CHANNEL_MAP.PLAYER_REMOVED}] , fromServerId=[${fromServerId}] , self=[${isSelf(fromServerId)}]`);
             this.gameState.removePlayer(removedSocketId);
