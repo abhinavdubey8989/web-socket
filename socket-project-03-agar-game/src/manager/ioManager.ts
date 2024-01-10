@@ -203,10 +203,10 @@ export class IoManager {
                 return;
             }
             const fromServerId = pubSubMsg.serverId;
-            console.log(`inside [${PUB_SUB_CHANNEL_MAP.NEW_PLAYER_ADDED}] , fromServerId=[${fromServerId}] , self=[${isSelf(fromServerId)}]`);
             if (isSelf(fromServerId)) {
                 return;
             }
+            console.log(`inside [${PUB_SUB_CHANNEL_MAP.NEW_PLAYER_ADDED}] , fromServerId=[${fromServerId}] , self=[${isSelf(fromServerId)}]`);
             this.gameState.addPubSubPlayers(pubSubMsg.mainData);
         });
 
