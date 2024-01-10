@@ -15,7 +15,7 @@ const port:string = process.env.PORT;
 const app = express();
 
 // api end points (testing only)
-app.use("/test" , testRouter);
+app.use("/api" , testRouter);
 
 
 // app.use(express.static(path.join(__dirname, '..', 'public')));

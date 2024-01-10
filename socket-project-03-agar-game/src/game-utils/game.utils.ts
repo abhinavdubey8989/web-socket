@@ -46,7 +46,7 @@ export function getValidDataFromJsonString(jsonStringifiedMsg) : any {
  */
 export function getServerDetails() {
     const port = process.env.PORT;
-    const host = os.hostname();
+    const host = getServerId();
     return {host , port};
 }
 

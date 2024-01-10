@@ -6,7 +6,7 @@ import { getServerDetails } from "../game-utils/game.utils";
 
 const router = Router();
 
-router.get("/app" , (req : Request , res)=>{
+router.get("/details" , (req : Request , res)=>{
 
     // const io = IoManager.getInstance().getIo();
     // const pub = PubSubManager.getInstance().getPub()
