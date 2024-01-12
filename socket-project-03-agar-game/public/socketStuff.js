@@ -82,6 +82,7 @@ socket.on('server-leaderboard-update', (serverLeaderBoardData) => {
     // console.log(leaderBoardArray)
 
 
+    const serverId = serverLeaderBoardData.serverId;
     let leaderBoardArray = serverLeaderBoardData.mainData.filter(x => x!== null  && x !== undefined);
 
     if(!leaderBoardArray){
@@ -98,6 +99,8 @@ socket.on('server-leaderboard-update', (serverLeaderBoardData) => {
                 <li class="leaderboard-player">${p.name} - ${p.score}</li>`
         }
     });
+
+    document.querySelector('#server-id-disp').innerHTML = serverId;
     const el = leaderBoardArray.find(u => u.name === uiCurrentPlayer.name);
     document.querySelector('.player-score').innerHTML = el.score;
 });
