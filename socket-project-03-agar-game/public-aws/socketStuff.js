@@ -1,7 +1,8 @@
 
 
 const port = 7800;
-const backendUrl = `http://localhost:${port}`;
+// const backendUrl = `http://localhost:${port}`;
+const backendUrl = "http://socketgame.greengoblin89.in"
 const socket = io.connect(backendUrl);
 
 
